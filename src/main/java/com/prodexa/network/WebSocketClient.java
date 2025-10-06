@@ -37,4 +37,13 @@ public class WebSocketClient implements WebSocket.Listener {
         messageHandler.handleMessage(message);
         return WebSocket.Listener.super.onText(webSocket, data, last);
     }
+    public void sendMessage(String message) {
+        if (webSocket != null) {
+            webSocket.sendText(message, true);
+            System.out.println("📤 Sent: " + message);
+        } else {
+            System.out.println("⚠️ WebSocket not connected yet.");
+        }
+    }
+
 }
