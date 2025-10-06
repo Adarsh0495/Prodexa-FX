@@ -14,6 +14,10 @@ module com.prodexa {
     requires java.net.http;
     requires com.google.gson;
 
-    opens com.prodexa to javafx.fxml;
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.annotation;
+    requires com.fasterxml.jackson.core;
+
+    opens com.prodexa to javafx.fxml, com.fasterxml.jackson.databind;
     exports com.prodexa;
 }
