@@ -6,7 +6,11 @@ import com.prodexa.scheduler.HeartbeatScheduler;
 import com.prodexa.service.HeartbeatService;
 import com.prodexa.service.NotificationService;
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
+
+import java.io.IOException;
 
 public class Launcher extends Application {
 
@@ -14,9 +18,16 @@ public class Launcher extends Application {
     private WebSocketClient webSocketClient;
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/prodexa/login.fxml"));
+//        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/prodexa/dashboard.fxml"));
+        Scene scene = new Scene(loader.load());
+        primaryStage.setScene(scene);
+        primaryStage.setMaximized(true);
+        primaryStage.setTitle("PRODEXA - Login");
+        primaryStage.show();
+
         try {
-            // 1️⃣ Initialize system tray
             notificationService = new NotificationService();
             notificationService.initTrayIcon();
             notificationService.updateStatus("Active");
@@ -44,11 +55,6 @@ public class Launcher extends Application {
                 }
             }).start();
 
-            // 5️⃣ Minimal JavaFX stage setup
-            primaryStage.setTitle("Prodexa Desktop");
-            primaryStage.setWidth(400);
-            primaryStage.setHeight(200);
-            primaryStage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
