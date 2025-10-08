@@ -28,7 +28,6 @@ public class Launcher extends Application {
         primaryStage.show();
 
         try {
-            // 1️⃣ Initialize system tray
             notificationService = new NotificationService();
             notificationService.initTrayIcon();
             notificationService.updateStatus("Active");
