@@ -18,6 +18,7 @@ module com.prodexa {
     requires com.fasterxml.jackson.annotation;
     requires com.fasterxml.jackson.core;
     requires com.github.kwhat.jnativehook;
+    requires jdk.httpserver;
 
     opens com.prodexa to javafx.fxml, com.fasterxml.jackson.databind;
     exports com.prodexa;

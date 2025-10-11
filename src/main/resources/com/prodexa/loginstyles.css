@@ -35,7 +35,7 @@
 .login-card {
     -fx-background-color: white;
     -fx-background-radius: 15;
-    -fx-padding: 50 40 50 40; /* Bigger padding inside card */
+    -fx-padding: 50 40 50 40;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0, 0, 8);
 }
 
@@ -54,7 +54,7 @@
     -fx-border-color: #e0e0e0;
     -fx-border-radius: 10px;
     -fx-min-height: 50px;
-    -fx-pref-width: 320px; /* wider input fields */
+    -fx-pref-width: 320px;
 }
 
 .input-field:focused {
@@ -113,6 +113,6 @@ Hyperlink:hover {
     -fx-font-size: 14px;
     -fx-text-fill: #2c3e50;
     -fx-font-weight: bold;
-    -fx-padding: 0 0 4 2; /* small spacing below */
+    -fx-padding: 0 0 4 2;
 }
 

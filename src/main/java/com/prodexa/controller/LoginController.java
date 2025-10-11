@@ -1,78 +1,76 @@
 package com.prodexa.controller;
 
-import com.prodexa.model.LoginResponse;
-import com.prodexa.service.AuthService;
-import javafx.application.Platform;
+import com.prodexa.network.KeycloakCallbackServer;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.Button;
 import javafx.stage.Stage;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.Parent;
+
+import java.awt.Desktop;
+import java.net.URI;
+import java.io.IOException;
 
 public class LoginController {
 
-    @FXML private TextField emailField;
-    @FXML private PasswordField passwordField;
-    @FXML private Label statusLabel;
-    @FXML private CheckBox privacyPolicyCheck;
-
-    private final AuthService authService = new AuthService();
+    @FXML
+    private Label statusLabel;
 
     @FXML
-    private void handleLogin() {
-        String email = emailField.getText();
-        String password = passwordField.getText();
+    private Button loginButton;
 
-        if (email.isEmpty() || password.isEmpty()) {
-            statusLabel.setText("Please fill all fields.");
-            return;
+    // Keycloak details
+    private static final String KEYCLOAK_AUTH_URL = "http://localhost:8090/realms/Prodexa/protocol/openid-connect/auth";
+    private static final String CLIENT_ID = "prodexa-javafx";
+    private static final String REDIRECT_URI = "http://localhost:8088/dashboard";
+    private static final String RESPONSE_TYPE = "code";
+    private static final String SCOPE = "openid profile email";
+
+    @FXML
+    public void handleLogin() {
+        try {
+            // Step 1: Start small HTTP callback server to handle Keycloak redirect
+            KeycloakCallbackServer.start(this::onLoginSuccess);
+
+            // Step 2: Build Keycloak login URL
+            String authUrl = KEYCLOAK_AUTH_URL
+                    + "?client_id=" + CLIENT_ID
+                    + "&redirect_uri=" + REDIRECT_URI
+                    + "&response_type=" + RESPONSE_TYPE
+                    + "&scope=" + SCOPE;
+
+            // Step 3: Open Keycloak login page in browser
+            Desktop.getDesktop().browse(new URI(authUrl));
+
+            statusLabel.setText("Opening Keycloak login...");
+        } catch (Exception e) {
+            statusLabel.setText("Error: " + e.getMessage());
+            e.printStackTrace();
         }
-        if (!privacyPolicyCheck.isSelected()) {
-            statusLabel.setText("Please agree to the Privacy Policy.");
-            return;
-        }
-
-        new Thread(() -> {
-            try {
-                LoginResponse loginResponse = authService.login(email, password);
-
-                Platform.runLater(() -> {
-                    try {
-                        statusLabel.setText("Login successful!");
-
-                        com.example.prodexadesktop.service.UserSession.getInstance().setSession(
-                                loginResponse.getEmail(),
-                                loginResponse.getToken()
-                        );
-
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/prodexa/dashboard.fxml"));
-                        Parent root = loader.load();
-
-                        Stage stage = (Stage) emailField.getScene().getWindow();
-                        Scene scene = new Scene(root);
-                        stage.setScene(scene);
-                        stage.setTitle("Dashboard");
-                        stage.show();
-
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        statusLabel.setText("Failed to load dashboard: " + ex.getMessage());
-                    }
-                });
-
-            } catch (Exception e) {
-                Platform.runLater(() -> statusLabel.setText("Error: " + e.getMessage()));
-            }
-        }).start();
     }
 
-    @FXML
-    private void handleForgotPassword() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Forgot Password");
-        alert.setHeaderText("Password Recovery");
-        alert.setContentText("Please contact your mentor or admin to reset your password.");
-        alert.showAndWait();
+    // Callback from KeycloakCallbackServer when login succeeds
+    private void onLoginSuccess(String accessToken) {
+        System.out.println("✅ Login successful!");
+        System.out.println("Access Token: " + accessToken);
+
+        // Navigate to Dashboard
+        javafx.application.Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/prodexa/dashboard.fxml"));
+                Parent root = loader.load();
+
+                Stage stage = (Stage) loginButton.getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.setFullScreen(true);
+                stage.show();
+            } catch (IOException e) {
+                e.printStackTrace();
+                statusLabel.setText("Failed to load dashboard");
+            }
+        });
     }
 }
