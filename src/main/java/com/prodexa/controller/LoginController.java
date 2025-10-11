@@ -1,76 +1,63 @@
+
 package com.prodexa.controller;
 
-import com.prodexa.network.KeycloakCallbackServer;
+import com.prodexa.service.KeycloakAuthService;
+import com.prodexa.service.SessionManager;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.Button;
-import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.stage.Stage;
 
-import java.awt.Desktop;
-import java.net.URI;
 import java.io.IOException;
 
 public class LoginController {
 
     @FXML
     private Label statusLabel;
-
     @FXML
     private Button loginButton;
 
-    // Keycloak details
-    private static final String KEYCLOAK_AUTH_URL = "http://localhost:8090/realms/Prodexa/protocol/openid-connect/auth";
-    private static final String CLIENT_ID = "prodexa-javafx";
-    private static final String REDIRECT_URI = "http://localhost:8088/dashboard";
-    private static final String RESPONSE_TYPE = "code";
-    private static final String SCOPE = "openid profile email";
+    private final KeycloakAuthService authService = new KeycloakAuthService();
+    private final SessionManager sessionManager = SessionManager.getInstance();
 
     @FXML
     public void handleLogin() {
-        try {
-            // Step 1: Start small HTTP callback server to handle Keycloak redirect
-            KeycloakCallbackServer.start(this::onLoginSuccess);
+        loginButton.setDisable(true);
+        statusLabel.setText("Opening Keycloak login...");
 
-            // Step 2: Build Keycloak login URL
-            String authUrl = KEYCLOAK_AUTH_URL
-                    + "?client_id=" + CLIENT_ID
-                    + "&redirect_uri=" + REDIRECT_URI
-                    + "&response_type=" + RESPONSE_TYPE
-                    + "&scope=" + SCOPE;
-
-            // Step 3: Open Keycloak login page in browser
-            Desktop.getDesktop().browse(new URI(authUrl));
-
-            statusLabel.setText("Opening Keycloak login...");
-        } catch (Exception e) {
-            statusLabel.setText("Error: " + e.getMessage());
-            e.printStackTrace();
-        }
+        authService.authenticate().whenComplete((tokens, error) -> {
+            Platform.runLater(() -> {
+                if (tokens != null) {
+                    System.out.println("Login successful!");
+                    sessionManager.createSession(tokens);
+                    navigateToDashboard();
+                } else {
+                    System.err.println("Login failed: " + error.getMessage());
+                    statusLabel.setText("Error: Login failed.");
+                    loginButton.setDisable(false);
+                }
+            });
+        });
     }
 
-    // Callback from KeycloakCallbackServer when login succeeds
-    private void onLoginSuccess(String accessToken) {
-        System.out.println("✅ Login successful!");
-        System.out.println("Access Token: " + accessToken);
+    private void navigateToDashboard() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/prodexa/dashboard.fxml")); // Assuming it's main-view.fxml now
+            Parent root = loader.load();
 
-        // Navigate to Dashboard
-        javafx.application.Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/prodexa/dashboard.fxml"));
-                Parent root = loader.load();
-
-                Stage stage = (Stage) loginButton.getScene().getWindow();
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
-                stage.setFullScreen(true);
-                stage.show();
-            } catch (IOException e) {
-                e.printStackTrace();
-                statusLabel.setText("Failed to load dashboard");
-            }
-        });
+            Stage stage = (Stage) loginButton.getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.setTitle("Prodexa Dashboard");
+            stage.setFullScreen(true);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            statusLabel.setText("Failed to load dashboard");
+        }
     }
 }
