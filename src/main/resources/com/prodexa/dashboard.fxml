@@ -28,4 +28,7 @@
     <Button fx:id="stopButton" layoutX="450.0" layoutY="200.0"
             text="Stop Monitoring" onAction="#handleStopButton"/>
 
+<!--    <Button text="Test Screenshot" onAction="#handleTestScreenshot" />-->
+<!--    <Button text="Test Webcam" onAction="#handleTestWebcam" />-->
+
 </AnchorPane>

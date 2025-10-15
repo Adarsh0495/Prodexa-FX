@@ -1,10 +1,18 @@
 package com.prodexa.controller;
 
+import com.prodexa.service.CaptureService;
 import com.prodexa.service.InputMonitoringService;
+import com.prodexa.service.SessionManager;
+import com.sun.net.httpserver.HttpServer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.util.Map;
 
 public class DashboardController {
 
@@ -24,12 +32,16 @@ public class DashboardController {
     private Button breakButton;
 
     private InputMonitoringService monitoringService;
+    private final CaptureService captureService = new CaptureService();
+    private final SessionManager sessionManager = SessionManager.getInstance();
     private Thread updaterThread;
 
     private boolean isOnBreak = false;
     private boolean isMonitoring = false;
 
     public void initialize() {
+//        sessionManager.createSession(Map.of("access_token", "fake-test-token"));
+//        startMockUploadServer();
         stopButton.setDisable(true);
         breakButton.setDisable(true);
     }
@@ -41,6 +53,7 @@ public class DashboardController {
         }
 
         monitoringService.start();
+        captureService.startMonitoring();
         isMonitoring = true;
         isOnBreak = false;
 
@@ -96,12 +109,12 @@ public class DashboardController {
             int totalKeys = monitoringService.getKeyPressCount();
             int totalClicks = monitoringService.getMouseClickCount();
 
-            // Send to backend (replace with your backend call)
             System.out.println("Sending to backend -> Keys: " + totalKeys + ", Clicks: " + totalClicks);
 
             monitoringService.stop();
             monitoringService.resetCounts();
         }
+        captureService.stopMonitoring();
 
         isMonitoring = false;
         startButton.setDisable(false);
@@ -114,5 +127,43 @@ public class DashboardController {
             mouseLabel.setText("Mouse Clicks: 0");
         });
     }
+
+//    @FXML
+//    private void handleTestScreenshot() {
+//        System.out.println("--- UI TEST: Manually triggering screenshot ---");
+//        captureService.captureAndUploadScreenshot();
+//    }
+//
+//    @FXML
+//    private void handleTestWebcam() {
+//        System.out.println("--- UI TEST: Manually triggering webcam photo ---");
+//        captureService.captureAndUploadWebcamPhoto();
+//    }
+
+//    private void startMockUploadServer() {
+//        try {
+//            HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 8080), 0);
+//            server.createContext("/api/captures/upload", exchange -> {
+//                System.out.println("--- MOCK SERVER: RECEIVED UPLOAD ---");
+//                exchange.getRequestHeaders().forEach((key, value) -> System.out.println("Header: " + key + " = " + value));
+//
+//                try (InputStream is = exchange.getRequestBody()) {
+//                    byte[] data = is.readNBytes(100);
+//                    System.out.println("Received " + is.available() + " more bytes of image data...");
+//                }
+//
+//                String response = "{\"status\": \"mock upload successful\"}";
+//                exchange.sendResponseHeaders(200, response.length());
+//                exchange.getResponseBody().write(response.getBytes());
+//                exchange.close();
+//                System.out.println("--- MOCK SERVER: RESPONSE SENT ---");
+//            });
+//            server.setExecutor(null);
+//            server.start();
+//            System.out.println("Mock upload server started on port 8080.");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }
 
